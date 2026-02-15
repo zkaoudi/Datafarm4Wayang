@@ -8,9 +8,11 @@ def generate_abstract_plans():
     )
     print()
 
+    import sys
+    python_executable = sys.executable
     os.system(
         f"cd {CONFIG.ABSTRACT_PLAN_GENERATOR}; "
-        f"python3 NewAbstractExecutionPlanAnalyzer.py {CONFIG.N_JOBS} {CONFIG.ORIG_EXEC_PLAN_FOLDER} {CONFIG.GENERATED_ABSTRACT_EXECUTION_PLAN_FOLDER}"
+        f"{python_executable} NewAbstractExecutionPlanAnalyzer.py {CONFIG.N_JOBS} {CONFIG.ORIG_EXEC_PLAN_FOLDER} {CONFIG.GENERATED_ABSTRACT_EXECUTION_PLAN_FOLDER}"
     )
 
 

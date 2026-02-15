@@ -145,7 +145,11 @@ def save_generated_exec_plan_graph(pg, dest_folder, save_graph_plot=True):
     print(data1)
 
     if save_graph_plot:
-        ax = _show_generated_exec_plan_graph(pg)
-        # ax.set_title(f'{pg.graph["plan_id"]}')
-        plt.savefig(os.path.join(dest_folder, f'{pg.graph["plan_id"]}.pdf'))
+        try:
+            ax = _show_generated_exec_plan_graph(pg)
+            # ax.set_title(f'{pg.graph["plan_id"]}')
+            plt.savefig(os.path.join(dest_folder, f'{pg.graph["plan_id"]}.pdf'))
+        except ImportError as e:
+            print(f"Warning: Could not save graph plot: {e}")
+            plt.close()
         plt.close()

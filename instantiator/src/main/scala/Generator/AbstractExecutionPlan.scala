@@ -112,7 +112,8 @@ object AbstractExecutionPlan {
 
     //Parse edges
     //println()
-    for (e <- parsedJson.get("links").asInstanceOf[Some[Seq[Map[String, String]]]].get) {
+    val edgesKey = if (parsedJson.contains("links")) "links" else "edges"
+    for (e <- parsedJson.get(edgesKey).asInstanceOf[Some[Seq[Map[String, String]]]].get) {
       //println(e)
       asbPlan.execPlan.addEdge(new AbstractOperator(e("source")),
         new AbstractOperator(e("target")))
