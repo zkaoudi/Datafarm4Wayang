@@ -1,18 +1,18 @@
 package Generator.DatasetJob.job
 
-import Generator.AbstractJob
+import Generator.{AbstractJob, AbstractSparkJob}
 import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractTableOperatorManager, JoinRelation}
 
 /**
   * Dataset manager for the Join Order Benchmark (JOB) on the IMDB dataset.
   *
-  * Generated jobs read the 21 IMDB CSV files from the job's `datapath` argument and only target
-  * Wayang (`TARGET_PLATFORM = "Wayang"`).
+  * Generated jobs read the 21 IMDB CSV files from the job's `datapath` argument and target Wayang or
+  * Spark (`TARGET_PLATFORM = "Wayang"` or `"Spark"`).
   */
 class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetOperatorManager {
 
-  if (targetPlatform != "Wayang")
-    throw new Exception(s"""DATA_MANAGER "JOB" only supports TARGET_PLATFORM "Wayang" (got "$targetPlatform").""")
+  if (targetPlatform != "Wayang" && targetPlatform != "Spark")
+    throw new Exception(s"""DATA_MANAGER "JOB" supports TARGET_PLATFORM "Wayang" and "Spark" (got "$targetPlatform").""")
 
   platform = targetPlatform
 
@@ -20,11 +20,18 @@ class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetO
 
   private val catalog: Map[String, JOBTableStats] = JOBCatalog.load()
 
-  def getTableOperatorManager(s: String, p: String): AbstractTableOperatorManager =
-    new JOBTableOperatorManager(JOBSchema.table(s), catalog(s))
+  def getTableOperatorManager(s: String, p: String): AbstractTableOperatorManager = p match {
+    case "Spark" => new JOBSparkTableOperatorManager(JOBSchema.table(s), catalog(s))
+    case _ => new JOBWayangTableOperatorManager(JOBSchema.table(s), catalog(s))
+  }
 
   override def wayangJob(jobBody: String, jobName: String, saveExecutionPlan: Boolean, tables: Seq[String]): AbstractJob =
     AbstractWayangJOBJob(jobBody, jobName, saveExecutionPlan, tables)
+
+  override def sparkJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob = {
+    val names = tables.map(_.tableName).distinct
+    AbstractSparkJob(jobBody, jobName, obj => JOBParsers.code(obj, names), "JOB")
+  }
 
   /**
     * Join sequence for `nJoins` joins: a walk over the JOB join graph where each join starts from
@@ -88,5 +95,5 @@ class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetO
 
 object JOBDatasetOperatorManager {
   /** Placeholder for the job-specific parser object; replaced when the job file is written. */
-  val ParsersToken = "__JOB_PARSERS__"
+  val ParsersToken: String = Generator.DatasetJob.ParserCode.Token
 }

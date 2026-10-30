@@ -61,6 +61,13 @@ trait AbstractDatasetOperatorManager {
   def wayangJob(jobBody: String, jobName: String, saveExecutionPlan: Boolean, tables: Seq[String]): AbstractJob =
     AbstractWayangJob(jobBody, jobName, saveExecutionPlan = saveExecutionPlan)
 
+  /**
+    * Wraps the generated operator code into a Spark job, including the parsers for `tables`.
+    * Only datasets that implement Spark code generation override this.
+    */
+  def sparkJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
+    throw new Exception(s"""TARGET_PLATFORM "Spark" is not supported by ${getClass.getSimpleName}""")
+
 
   val maxAttempts = 100
   val random: Random.type = Random
@@ -147,6 +154,8 @@ object AbstractDatasetOperatorManager {
   def apply(s: String, p: String): AbstractDatasetOperatorManager = {
     if (s == "TPCH")
       new TPCHDatasetOperatorManager(p)
+    else if (s == "IMDB" && p == "Spark")
+      throw new Exception("DATA_MANAGER \"IMDB\" does not support TARGET_PLATFORM \"Spark\"")
     else if (s == "IMDB")
       IMDBKDatasetOperatorManager
     else if (s == "JOB")
