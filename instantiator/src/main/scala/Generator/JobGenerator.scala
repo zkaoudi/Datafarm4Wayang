@@ -240,11 +240,11 @@ object JobGenerator {
         "abstractPlansSource" -> args(3),
         "genJobsDest" -> args(4),
         "jobSeed" -> args.lift(5).getOrElse("-1"),
-        "targetPlatform" -> args(6)
+        "targetPlatform" -> args.lift(6).getOrElse("Flink")
 
       )
     else
-      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager> <abstractPlansSource> <genJobsDest> [jobSeed]")
+      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager> <abstractPlansSource> <genJobsDest> [jobSeed] [targetPlatform: Flink|Wayang]")
     params
   }
 
@@ -279,9 +279,12 @@ object JobGenerator {
         val jobId = s"Job${i}v$j"
         JobInfoRecorder.openJobRecorder(jobId)
 
+        // A fixed jobSeed makes the generation reproducible; it is combined with the plan index so that
+        // different plans still get different seeds (otherwise all versions j of all plans would be identical
+        // in table sequence, filters and group-by fields).
         val jSeed = if (params("jobSeed").toInt > -1){
           println(s"WARN - Setting job seed to ${params("jobSeed").toInt}")
-          params("jobSeed").toInt
+          1000 * params("jobSeed").toInt + i
         } else i
 
         val jGenerator = new JobGenerator(abstractPlan, tpchDatasetOperatorManager, seed = 10 * jSeed + j)

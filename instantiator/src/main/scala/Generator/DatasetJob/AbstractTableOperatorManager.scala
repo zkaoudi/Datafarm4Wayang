@@ -46,9 +46,17 @@ trait AbstractTableOperatorManager {
   }
 
   def buildFilterCode(inVarName: String, outVarName: String, filterField: String, filterValue: String, filterOp: String = "<="): String = {
-    s"""
-       |val $outVarName = $inVarName.filter(x=>x._$filterField $filterOp $filterValue)
-      """.stripMargin
+    filterValue.trim match {
+      // date filters are written as CsvUtils.parseDate("yyyy-MM-dd") (Wayang); in Flink jobs the field is a java.sql.Date
+      case AbstractTableOperatorManager.ParseDate(date) =>
+        s"""
+           |val $outVarName = $inVarName.filter(x=>x._$filterField.getTime $filterOp dateFormatter.parseDateTime("$date").getMillis)
+          """.stripMargin
+      case _ =>
+        s"""
+           |val $outVarName = $inVarName.filter(x=>x._$filterField $filterOp $filterValue)
+          """.stripMargin
+    }
   }
 
   def buildReduceCode2(inVarName: String, outVarName1: String, outVarName2: String, groupByField: String): String = {
@@ -170,4 +178,8 @@ trait AbstractTableOperatorManager {
   override def toString: String = tableName
 
 
+}
+
+object AbstractTableOperatorManager {
+  val ParseDate = """CsvUtils\.parseDate\("(\d{4}-\d{2}-\d{2})"\)""".r
 }

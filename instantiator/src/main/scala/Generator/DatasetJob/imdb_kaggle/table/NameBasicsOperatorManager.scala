@@ -31,7 +31,7 @@ case class NameBasicsOperatorManager() extends AbstractTableOperatorManager {
   override def dataSourceCode(outVarName: String): String = buildDataSourceCode(typeSchema, tableName + ".csv", outVarName, delimiter = ";")
 
   def filterCode(inVarName: String, outVarName: String, fieldSeed: Int = 0, valueSeed: Int = 0): (String, Double) = {
-    val field = filterFields(fieldSeed % filterFields.size)
+    val field = filterFields(Math.floorMod(fieldSeed, filterFields.size))
 
     var filterField = ""
     var filterValue = ""

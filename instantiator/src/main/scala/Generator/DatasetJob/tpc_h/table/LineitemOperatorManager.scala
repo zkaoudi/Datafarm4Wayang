@@ -74,7 +74,7 @@ case class LineitemOperatorManager() extends AbstractTableOperatorManager {
 
 
   def filterCode(inVarName: String, outVarName: String, fieldSeed: Int = 0, valueSeed: Int = 0): (String, Double) = {
-    val field = filterFields(fieldSeed % filterFields.size)
+    val field = filterFields(Math.floorMod(fieldSeed, filterFields.size))
 
     var filterField = ""
     var filterValue = ""

@@ -2,7 +2,7 @@ import os
 import sys
 import warnings
 import pickle
-from IPython.core.display import display
+from IPython.display import display
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -93,8 +93,8 @@ def active_learning_iteration(X_train, y_train, ids_train, X_test, ids_test, fea
     IQR_interval = qf_model.predict_model_uncertainty(X_test, verbose=True)
 
     results["model"] = qf_model
-    results["train_ids"] = ids_train.to_dict(orient="row")
-    results["test_ids"] = ids_test.to_dict(orient="row")
+    results["train_ids"] = ids_train.to_dict(orient="records")
+    results["test_ids"] = ids_test.to_dict(orient="records")
     results["train_labels"] = y_train
     # results["test_labels"] = y_test
     results["pred_labels"] = y_pred
@@ -266,7 +266,7 @@ def run(config):
 
     if config.RANDOM_INIT:
         print("Random init sampling...")
-        sample_model = RandomSampler(config.init_jobs, config.FEATURE_COLS, config.LABEL_COL, seed=42)
+        sample_model = RandomSampler(config.INIT_JOBS, config.FEATURE_COLS, config.LABEL_COL, seed=42)
     else:
         sample_model = UniformAgglomerativeSampler(config.INIT_JOBS, config.FEATURE_COLS, config.LABEL_COL,
                                                    config.SAMPLE_COL)

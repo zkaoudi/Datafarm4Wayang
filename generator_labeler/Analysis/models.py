@@ -1,4 +1,4 @@
-from IPython.core.display import display
+from IPython.display import display
 from statsmodels.api import OLS
 from sklearn.metrics import r2_score, mean_absolute_error, classification_report, f1_score
 from sklearn.model_selection import GridSearchCV, train_test_split

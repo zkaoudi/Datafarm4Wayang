@@ -222,7 +222,7 @@ class UnsupervisedSampler:
             )
 
             fig, ax = plt.subplots(figsize=(10, 6))
-            sns.scatterplot(X_reduced[:, 0], X_reduced[:, 1], ax=ax)
+            sns.scatterplot(x=X_reduced[:, 0], y=X_reduced[:, 1], ax=ax)
             ax.set_xlabel("Component 1")
             ax.set_ylabel("Component 2")
             # plt.show()
