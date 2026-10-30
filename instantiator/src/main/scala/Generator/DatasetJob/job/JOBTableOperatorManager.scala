@@ -1,17 +1,44 @@
 package Generator.DatasetJob.job
 
-import Generator.DatasetJob.AbstractWayangTableOperatorManager
+import Generator.DatasetJob.{AbstractSparkTableOperatorManager, AbstractTableOperatorManager, AbstractWayangTableOperatorManager, ParserCode}
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+
+import scala.annotation.meta.{field, getter, param}
 
 import scala.collection.immutable.ListMap
 
 /**
-  * Generates Wayang operator code for one JOB table.
+  * The JOB-specific part of operator generation for one table, independent of the target platform:
+  * reading/parsing the CSV, filter predicates from [[JOBCatalog]], and group-by/sort keys that are
+  * safe for nullable columns.
   *
-  * Joins, maps, reduce and the sink come from [[AbstractWayangTableOperatorManager]]. This class
-  * overrides the parts that depend on the JOB data: reading/parsing the CSV, filter predicates
-  * from [[JOBCatalog]], and group-by/sort keys that are safe for nullable columns.
+  * Mixed in after a platform trait ([[AbstractWayangTableOperatorManager]] or
+  * [[AbstractSparkTableOperatorManager]]), which supplies joins, maps and the sink; the few
+  * platform-specific code fragments used here come from the abstract hooks below.
   */
-class JOBTableOperatorManager(table: JOBTable, stats: JOBTableStats) extends AbstractWayangTableOperatorManager {
+trait JOBTableLogic extends AbstractTableOperatorManager {
+
+  // JobInfoRecorder serializes table managers: the schema is left out of the job info JSON, the stats are kept
+  protected def table: JOBTable
+
+  protected def stats: JOBTableStats
+
+  // ---- platform hooks ----------------------------------------------------------------------
+
+  /** Read `file` from `datapath` and turn each line into a tuple with `parser`. */
+  protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String
+
+  /** Keep one element per key. */
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String
+
+  /** Reduce the whole input to a single element. */
+  protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String
+
+  /** Sort by the tuple field at 1-based position `index`. */
+  protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String
+
+  // ---- table description -------------------------------------------------------------------
 
   override val tableName: String = table.name
 
@@ -42,13 +69,7 @@ class JOBTableOperatorManager(table: JOBTable, stats: JOBTableStats) extends Abs
   // ---- data source -------------------------------------------------------------------------
 
   override def dataSourceCode(outVarName: String): String =
-    s"""
-       | val $outVarName = planBuilder
-       | .readTextFile(datapath + "${table.fileName}")
-       | .withName("Read ${table.name}")
-       | .map(${JOBDatasetOperatorManager.ParsersToken}.${table.name})
-       | .withName("Parse ${table.name} to tuple")
-    """.stripMargin
+    jobSourceCode(outVarName, table.fileName, s"${ParserCode.Token}.${table.name}", table.name)
 
   // ---- filter ------------------------------------------------------------------------------
 
@@ -58,14 +79,14 @@ class JOBTableOperatorManager(table: JOBTable, stats: JOBTableStats) extends Abs
       println(s"WARN - no selectivity for '${p.sql}' in the JOB catalog; recording -1.0 (run JOB_MetaDataAnalyzer.py)")
     val code =
       s"""
-         |val $outVarName = $inVarName.filter(x => ${p.condition(JOBDatasetOperatorManager.ParsersToken)})
+         |val $outVarName = $inVarName.filter(x => ${p.condition(ParserCode.Token)})
       """.stripMargin
     (code, p.selectivity.getOrElse(-1.0))
   }
 
   // ---- group by ----------------------------------------------------------------------------
 
-  /** Key extractor for a group field; NULL text values are grouped under "" (Wayang rejects null keys). */
+  /** Key extractor for a group field; NULL text values are grouped under "" (null keys are rejected). */
   private def keyUdf(field: String): String = {
     val c = table.column(field)
     val i = table.index(field)
@@ -76,31 +97,74 @@ class JOBTableOperatorManager(table: JOBTable, stats: JOBTableStats) extends Abs
 
   override def groupByCode1(inVarName: String, outVarName: String, seed: Int): (String, Double) = {
     val g = groupField(seed)
-    (s"""
-        |val $outVarName = $inVarName.reduceByKey(${keyUdf(g)}, (t1, t2) => t1)
-      """.stripMargin, groupFields(g).toDouble)
+    (jobKeyedReduceCode(inVarName, outVarName, keyUdf(g)), groupFields(g).toDouble)
   }
 
   override def groupByCode2(inVarName: String, outVarName1: String, outVarName2: String, seed: Int): (String, Double) = {
-    // two consecutive group-bys collapse into one reduce-by-key, as for TPC-H on Wayang
+    // two consecutive group-bys collapse into one keyed reduce, as for TPC-H on Wayang
     val g = groupField(seed)
-    (s"""
-        |val $outVarName2 = $inVarName.reduceByKey(${keyUdf(g)}, (t1, t2) => t1)
-      """.stripMargin, groupFields(g).toDouble)
+    (jobKeyedReduceCode(inVarName, outVarName2, keyUdf(g)), groupFields(g).toDouble)
   }
 
+  // ---- reduce ------------------------------------------------------------------------------
+
+  // In the JOB workload a Reduce pair is the combiner + reduce of the global MIN(...) aggregate.
+  override def reduceCode1(inVarName: String, outVarName: String): String = jobGlobalReduceCode(inVarName, outVarName)
+
   override def reduceCode2(inVarName: String, outVarName1: String, outVarName2: String, seed: Int): String =
-    s"""
-       |val $outVarName2 = $inVarName.reduce((x1, x2) => x1)
-      """.stripMargin
+    jobGlobalReduceCode(inVarName, outVarName2)
 
   // ---- sort --------------------------------------------------------------------------------
 
   override def sortPartitionCode(inVarName: String, outVarName: String, seed: Int): String = {
     val keys = table.nullSafeKeyColumns
     val c = keys(Math.floorMod(seed, keys.size))
-    s"""
-       |val $outVarName = $inVarName.sort(_._${table.index(c.name)})
-      """.stripMargin
+    jobSortCode(inVarName, outVarName, table.index(c.name))
   }
+}
+
+/** JOB table on Wayang. */
+class JOBWayangTableOperatorManager(@(JsonIgnore @param @field @getter) protected val table: JOBTable, protected val stats: JOBTableStats)
+  extends AbstractWayangTableOperatorManager with JOBTableLogic {
+
+  protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String =
+    s"""
+       | val $outVarName = planBuilder
+       | .readTextFile(datapath + "$file")
+       | .withName("Read $name")
+       | .map($parser)
+       | .withName("Parse $name to tuple")
+    """.stripMargin
+
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String =
+    s"""
+        |val $outVarName = $inVarName.reduceByKey($keyUdf, (t1, t2) => t1)
+      """.stripMargin
+
+  protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String =
+    s"""
+       |val $outVarName = $inVarName.reduce((x1, x2) => x1)
+      """.stripMargin
+
+  protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String =
+    s"""
+       |val $outVarName = $inVarName.sort(_._$index)
+      """.stripMargin
+}
+
+/** JOB table on Spark (RDD API). */
+class JOBSparkTableOperatorManager(@(JsonIgnore @param @field @getter) protected val table: JOBTable, protected val stats: JOBTableStats)
+  extends AbstractSparkTableOperatorManager with JOBTableLogic {
+
+  protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String =
+    sparkSourceCode(outVarName, file, parser, name)
+
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String =
+    sparkKeyedReduceCode(inVarName, outVarName, keyUdf)
+
+  protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String =
+    sparkGlobalReduceCode(inVarName, outVarName)
+
+  protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String =
+    sparkSortCode(inVarName, outVarName, index)
 }

@@ -1,6 +1,8 @@
 package Generator.DatasetJob.tpc_h.table
 
-import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractTableOperatorManager,AbstractWayangTableOperatorManager}
+import Generator.{AbstractJob, AbstractSparkJob}
+import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractSparkTableOperatorManager, AbstractTableOperatorManager, AbstractWayangTableOperatorManager}
+import Generator.DatasetJob.tpc_h.TPCHParsers
 
 import scala.collection.mutable
 import scala.util.Random
@@ -39,6 +41,18 @@ class TPCHDatasetOperatorManager extends AbstractDatasetOperatorManager {
           case _ => throw new Exception(s"Can not find table operator manager for table '$s' ")
        }
     }
+    case "Spark" => {
+       s match {
+          case "lineitem" => new LineitemOperatorManager with AbstractSparkTableOperatorManager
+          case "orders" => new OrdersOperatorManager with AbstractSparkTableOperatorManager
+          case "customer" => new CustomerOperatorManager with AbstractSparkTableOperatorManager
+          case "partsupp" => new PartsuppOperatorManager with AbstractSparkTableOperatorManager
+          case "part" => new PartOperatorManager with AbstractSparkTableOperatorManager
+          case "supplier" => new SupplierOperatorManager with AbstractSparkTableOperatorManager
+          case "nation" => new NationOperatorManager with AbstractSparkTableOperatorManager
+          case _ => throw new Exception(s"Can not find table operator manager for table '$s' ")
+       }
+    }
     case _ => { 
       s match {
           case "lineitem" => LineitemOperatorManager()
@@ -52,6 +66,9 @@ class TPCHDatasetOperatorManager extends AbstractDatasetOperatorManager {
         }
       }
     }
+
+  override def sparkJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
+    AbstractSparkJob(jobBody, jobName, obj => TPCHParsers.code(obj, tables), "TPC-H")
 
   def main(args: Array[String]): Unit = {
     for (i <- 0 to 100){

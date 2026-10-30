@@ -59,7 +59,8 @@ DataFarm can be configured to generate datasets with different characteristics:
 - `N_JOBS` defines the number of diverse Abstract Plans that will be generated.
 - `N_VERSIONS` defined the number of versions that will be generated for each Abstract Plan.
 - `JOB_SEED` can be specified to make the generation process replicable. If -1 the generation process is random. Otherwise, if >-1 the system will use the specified seed.
-- `DATA_MANAGER` specifies the database manager to be used: "TPCH" for TPC-H, "JOB" for the Join Order Benchmark on IMDB (Wayang only, see [Join Order Benchmark (JOB)](#join-order-benchmark-job)).
+- `DATA_MANAGER` specifies the database manager to be used: "TPCH" for TPC-H, "JOB" for the Join Order Benchmark on IMDB (Wayang or Spark, see [Join Order Benchmark (JOB)](#join-order-benchmark-job)).
+- `TARGET_PLATFORM` specifies the platform the jobs are generated for: "Flink", "Wayang" or "Spark" (see [Spark jobs](#spark-jobs)).
 - `DATA_ID` specifies the id of the input data meta-data that has to be used by the system. The input data meta-data can be specified in `TableMetaData.py`.
 - `EXPERIMENT_ID` defines the id of the experiment. It will be the name of the folder where the results of the generation process will be stored.
 
@@ -91,7 +92,7 @@ DataFarm can also generate Wayang jobs over the IMDB database of the Join Order 
 
 ```Python
 DATA_MANAGER = "JOB"
-TARGET_PLATFORM = "Wayang"
+TARGET_PLATFORM = "Wayang"  # or "Spark"
 ```
 
 **Data.** The jobs read the 21 IMDB CSV files of the original JOB dump (`title.csv`, `cast_info.csv`, ...) from
@@ -142,4 +143,28 @@ generated jobs.
   when no selective filter precedes them.
 - `JOB_SEED` set to a fixed value makes every version `j` of every plan start from the same table; use `-1` for
   more variety.
+
+## Spark jobs
+With `TARGET_PLATFORM = "Spark"`, DataFarm generates Spark jobs for TPC-H (`DATA_MANAGER = "TPCH"`) and JOB
+(`DATA_MANAGER = "JOB"`) from the same abstract plans, join sequences and filters as the Wayang jobs.
+
+- The jobs use the RDD API, one transformation per plan operator, so Spark runs exactly the generated plan (no
+  Catalyst re-optimization of filters or join order). Joins keep the right-hand tuple, as in the Wayang jobs.
+- Each `JobXvY.scala` is a standalone object in package `datafarm.generated.spark` that parses its own input
+  (object `JobXvYParsers` in the same file): TPC-H `.tbl` files, or the JOB IMDB CSVs. Dates in TPC-H become `Int`s
+  in the encoding of Wayang's `CsvUtils.parseDate`, so the TPC-H date filters behave the same on both platforms.
+- The generator writes a `build.sbt` (Scala 2.12, Spark 3.5.3, `provided`) next to the jobs:
+
+```bash
+cd data/<EXPERIMENT_ID>/generated_jobs
+sbt package
+spark-submit --class datafarm.generated.spark.Job0v0 target/scala-2.12/datafarm-spark-jobs_2.12-0.1.jar \
+  /path/to/data/ [planOutputDir]
+```
+
+  The data path must end with `/`. A job runs its plan with `count()` and prints the row count and run time; with
+  `planOutputDir` it also writes `JobXvY.json` with the run time, row count and the RDD lineage (`toDebugString`).
+- A Reduce pair in the abstract plan is a keyed reduce on a group field for TPC-H (as in the Flink TPC-H jobs) and
+  a global reduce for JOB (the `MIN(...)` aggregate). Spark TPC-H group-bys use the chosen group field itself.
+- `RunLabelForecaster.py` / `BuildAndSubmit.py` still submit Flink jobs only.
 

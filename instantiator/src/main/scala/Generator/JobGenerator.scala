@@ -223,6 +223,8 @@ case class JobGenerator(abstractPlan: AbstractExecutionPlan, datasetOperatorMana
     //println(operatorCodes)
     if(platform == "Wayang") {
       datasetOperatorManager.wayangJob(operatorCodes.mkString("\n"), jobName, saveExecutionPlan, tableSequence.map(_.tableName).distinct)
+    } else if (platform == "Spark") {
+      datasetOperatorManager.sparkJob(operatorCodes.mkString("\n"), jobName, tableSequence)
     } else {
       AbstractFlinkJob(operatorCodes.mkString("\n"), jobName, saveExecutionPlan = saveExecutionPlan)
     }
@@ -244,7 +246,7 @@ object JobGenerator {
 
       )
     else
-      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager: TPCH|IMDB|JOB> <abstractPlansSource> <genJobsDest> [jobSeed] [targetPlatform: Flink|Wayang]")
+      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager: TPCH|IMDB|JOB> <abstractPlansSource> <genJobsDest> [jobSeed] [targetPlatform: Flink|Wayang|Spark]")
     params
   }
 
