@@ -36,19 +36,24 @@ trait AbstractWayangTableOperatorManager extends AbstractTableOperatorManager {
   }
 
   override def buildFilterCode(inVarName: String, outVarName: String, filterField: String, filterValue: String, filterOp: String = "<="): String = {
+    // Wayang's TPC-H tuples hold flags such as o_orderstatus as Char; comparing a Char with a String literal
+    // is always false, so string equality is done on the field's string form.
+    val field = if (filterValue.trim.startsWith("\"")) s"x._$filterField.toString" else s"x._$filterField"
     s"""
-       |val $outVarName = $inVarName.filter(x=>x._$filterField $filterOp $filterValue)
+       |val $outVarName = $inVarName.filter(x=>$field $filterOp $filterValue)
       """.stripMargin
   }
 
+  /** groupBy(field).reduce: keyed reduce on the group field (1-based tuple position). */
   override def buildReduceCode2(inVarName: String, outVarName1: String, outVarName2: String, groupByField: String): String = {
       s"""
-       |val $outVarName2 = $inVarName.reduce((x1, x2) => x1)
+       |val $outVarName2 = $inVarName.reduceByKey(_._$groupByField, (x1, x2) => x1)
       """.stripMargin
   }
 
   override def buildGroupByCode1(inVarName: String, outVarName: String, groupByField: String): String = {
-       val field = if (groupByField == "0") "1" else groupByField
+       // groupByField is the 1-based tuple position
+       val field = groupByField
 
         s"""
        |val $outVarName = $inVarName.reduceByKey(_._$field, (t1,t2) => t1)
@@ -59,7 +64,8 @@ trait AbstractWayangTableOperatorManager extends AbstractTableOperatorManager {
 
   override def buildGroupByCode2(inVarName: String, outVarName1: String, outVarName2: String, groupByField: String): String = {
     //TODO check aggregation function complexity
-   val field = if (groupByField == "0") "1" else groupByField
+   // groupByField is the 1-based tuple position
+   val field = groupByField
 
         s"""
        |val $outVarName2 = $inVarName.reduceByKey(_._$field, (t1,t2) => t1)
@@ -122,21 +128,21 @@ trait AbstractWayangTableOperatorManager extends AbstractTableOperatorManager {
 
   override def groupByCode1(inVarName: String, outVarName: String, seed: Int): (String, Double) = {
     val gField = getElementBySeed(groupFields.keys.toSeq, seed).toString
-    val gFieldId = fields(gField).toInt-1
+    val gFieldId = fields(gField).toInt
     val code = buildGroupByCode1(inVarName, outVarName, gFieldId.toString)
     (code, groupFields(gField).toDouble)
   }
 
   override def groupByCode2(inVarName: String, outVarName1: String, outVarName2: String, seed: Int): (String, Double) = {
     val gField = getElementBySeed(groupFields.keys.toSeq, seed).toString
-    val gFieldId = fields(gField).toInt-1
+    val gFieldId = fields(gField).toInt
     val code = buildGroupByCode2(inVarName, outVarName1, outVarName2, gFieldId.toString)
     (code, groupFields(gField).toDouble)
   }
 
   override def reduceCode2(inVarName: String, outVarName1: String, outVarName2: String, seed: Int): String = {
     val rField = getElementBySeed(groupFields.keys.toSeq, seed).toString
-    val rFieldId = fields(rField).toInt-1
+    val rFieldId = fields(rField).toInt
     val code = buildReduceCode2(inVarName, outVarName1, outVarName2, rFieldId.toString)
     code
   }

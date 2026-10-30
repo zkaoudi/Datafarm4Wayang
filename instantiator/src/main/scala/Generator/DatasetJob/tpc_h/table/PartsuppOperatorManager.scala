@@ -49,7 +49,7 @@ case class PartsuppOperatorManager() extends AbstractTableOperatorManager{
   override def dataSourceCode(outVarName: String): String = buildDataSourceCode(typeSchema, tableName+".tbl", outVarName)
 
   override def filterCode(inVarName: String, outVarName: String, fieldSeed: Int, valueSeed: Int): (String, Double) = {
-    val field = filterFields(fieldSeed % filterFields.size)
+    val field = filterFields(Math.floorMod(fieldSeed, filterFields.size))
 
     var filterField = ""
     var filterValue = ""
