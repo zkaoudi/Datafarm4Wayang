@@ -18,7 +18,7 @@ case class LineitemOperatorManager() extends AbstractTableOperatorManager {
 
   //override val tableCardinality: Int = 6001215
 
-  val typeSchema = "(Int, Int, Int, Int, Float, Float, Float, Float, String, String, java.sql.Date, java.sql.Date, java.sql.Date, String, String)"
+  val typeSchema = "(Int, Int, Int, Int, Float, Float, Float, Float, String, String, java.sql.Date, java.sql.Date, java.sql.Date, String, String, String)"
 
   val fields: Map[String, String] = Map(
     "ORDERKEY" -> "1",

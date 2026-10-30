@@ -1,8 +1,8 @@
 package Generator.DatasetJob.tpc_h.table
 
-import Generator.{AbstractJob, AbstractSparkJob}
+import Generator.{AbstractJob, AbstractSQLJob, AbstractSparkJob}
 import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractSparkTableOperatorManager, AbstractTableOperatorManager, AbstractWayangTableOperatorManager}
-import Generator.DatasetJob.tpc_h.TPCHParsers
+import Generator.DatasetJob.tpc_h.{TPCHParsers, TPCHSql, TPCHSqlNaming}
 
 import scala.collection.mutable
 import scala.util.Random
@@ -53,6 +53,18 @@ class TPCHDatasetOperatorManager extends AbstractDatasetOperatorManager {
           case _ => throw new Exception(s"Can not find table operator manager for table '$s' ")
        }
     }
+    case "SQL" => {
+       s match {
+          case "lineitem" => new LineitemOperatorManager with TPCHSqlNaming
+          case "orders" => new OrdersOperatorManager with TPCHSqlNaming
+          case "customer" => new CustomerOperatorManager with TPCHSqlNaming
+          case "partsupp" => new PartsuppOperatorManager with TPCHSqlNaming
+          case "part" => new PartOperatorManager with TPCHSqlNaming
+          case "supplier" => new SupplierOperatorManager with TPCHSqlNaming
+          case "nation" => new NationOperatorManager with TPCHSqlNaming
+          case _ => throw new Exception(s"Can not find table operator manager for table '$s' ")
+       }
+    }
     case _ => { 
       s match {
           case "lineitem" => LineitemOperatorManager()
@@ -69,6 +81,11 @@ class TPCHDatasetOperatorManager extends AbstractDatasetOperatorManager {
 
   override def sparkJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
     AbstractSparkJob(jobBody, jobName, obj => TPCHParsers.code(obj, tables), "TPC-H")
+
+  override def sqlJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob = {
+    val all = (this.tables :+ "nation").map(t => getTableOperatorManager(t, "SQL"))
+    AbstractSQLJob(jobBody, jobName, "TPC-H", TPCHSql.ddl(all))
+  }
 
   def main(args: Array[String]): Unit = {
     for (i <- 0 to 100){

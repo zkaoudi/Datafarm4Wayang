@@ -1,18 +1,18 @@
 package Generator.DatasetJob.job
 
-import Generator.{AbstractJob, AbstractSparkJob}
+import Generator.{AbstractJob, AbstractSQLJob, AbstractSparkJob}
 import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractTableOperatorManager, JoinRelation}
 
 /**
   * Dataset manager for the Join Order Benchmark (JOB) on the IMDB dataset.
   *
   * Generated jobs read the 21 IMDB CSV files from the job's `datapath` argument and target Wayang or
-  * Spark (`TARGET_PLATFORM = "Wayang"` or `"Spark"`).
+  * Spark (`TARGET_PLATFORM = "Wayang"` or `"Spark"`), or are SQL queries over the IMDB tables (`"SQL"`).
   */
 class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetOperatorManager {
 
-  if (targetPlatform != "Wayang" && targetPlatform != "Spark")
-    throw new Exception(s"""DATA_MANAGER "JOB" supports TARGET_PLATFORM "Wayang" and "Spark" (got "$targetPlatform").""")
+  if (!Seq("Wayang", "Spark", "SQL").contains(targetPlatform))
+    throw new Exception(s"""DATA_MANAGER "JOB" supports TARGET_PLATFORM "Wayang", "Spark" and "SQL" (got "$targetPlatform").""")
 
   platform = targetPlatform
 
@@ -22,6 +22,7 @@ class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetO
 
   def getTableOperatorManager(s: String, p: String): AbstractTableOperatorManager = p match {
     case "Spark" => new JOBSparkTableOperatorManager(JOBSchema.table(s), catalog(s))
+    case "SQL" => new JOBSQLTableOperatorManager(JOBSchema.table(s), catalog(s))
     case _ => new JOBWayangTableOperatorManager(JOBSchema.table(s), catalog(s))
   }
 
@@ -32,6 +33,9 @@ class JOBDatasetOperatorManager(targetPlatform: String) extends AbstractDatasetO
     val names = tables.map(_.tableName).distinct
     AbstractSparkJob(jobBody, jobName, obj => JOBParsers.code(obj, names), "JOB")
   }
+
+  override def sqlJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
+    AbstractSQLJob(jobBody, jobName, "JOB", JOBSchema.ddl)
 
   /**
     * Join sequence for `nJoins` joins: a walk over the JOB join graph where each join starts from

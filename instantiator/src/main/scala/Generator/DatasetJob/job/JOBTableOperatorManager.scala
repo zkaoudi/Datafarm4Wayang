@@ -1,6 +1,6 @@
 package Generator.DatasetJob.job
 
-import Generator.DatasetJob.{AbstractSparkTableOperatorManager, AbstractTableOperatorManager, AbstractWayangTableOperatorManager, ParserCode}
+import Generator.DatasetJob.{AbstractSQLTableOperatorManager, AbstractSparkTableOperatorManager, AbstractTableOperatorManager, AbstractWayangTableOperatorManager, ParserCode}
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 
@@ -29,14 +29,20 @@ trait JOBTableLogic extends AbstractTableOperatorManager {
   /** Read `file` from `datapath` and turn each line into a tuple with `parser`. */
   protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String
 
-  /** Keep one element per key. */
-  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String
+  /** Keep one element per value of `field`. */
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, field: String): String
 
   /** Reduce the whole input to a single element. */
   protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String
 
   /** Sort by the tuple field at 1-based position `index`. */
   protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String
+
+  /** Keep the rows that satisfy `p`; the default is the dataflow form shared by Wayang and Spark. */
+  protected def jobFilterCode(inVarName: String, outVarName: String, p: JOBPredicate): String =
+    s"""
+       |val $outVarName = $inVarName.filter(x => ${p.condition(ParserCode.Token)})
+      """.stripMargin
 
   // ---- table description -------------------------------------------------------------------
 
@@ -77,17 +83,13 @@ trait JOBTableLogic extends AbstractTableOperatorManager {
     val p = predicates(Math.floorMod(fieldSeed, predicates.size))
     if (p.selectivity.isEmpty)
       println(s"WARN - no selectivity for '${p.sql}' in the JOB catalog; recording -1.0 (run JOB_MetaDataAnalyzer.py)")
-    val code =
-      s"""
-         |val $outVarName = $inVarName.filter(x => ${p.condition(ParserCode.Token)})
-      """.stripMargin
-    (code, p.selectivity.getOrElse(-1.0))
+    (jobFilterCode(inVarName, outVarName, p), p.selectivity.getOrElse(-1.0))
   }
 
   // ---- group by ----------------------------------------------------------------------------
 
-  /** Key extractor for a group field; NULL text values are grouped under "" (null keys are rejected). */
-  private def keyUdf(field: String): String = {
+  /** Dataflow key extractor for a group field; NULL text values are grouped under "" (null keys are rejected). */
+  protected def keyUdf(field: String): String = {
     val c = table.column(field)
     val i = table.index(field)
     if (!c.isInt && c.nullable) s"""(x => if (x._$i == null) "" else x._$i)""" else s"(_._$i)"
@@ -97,13 +99,13 @@ trait JOBTableLogic extends AbstractTableOperatorManager {
 
   override def groupByCode1(inVarName: String, outVarName: String, seed: Int): (String, Double) = {
     val g = groupField(seed)
-    (jobKeyedReduceCode(inVarName, outVarName, keyUdf(g)), groupFields(g).toDouble)
+    (jobKeyedReduceCode(inVarName, outVarName, g), groupFields(g).toDouble)
   }
 
   override def groupByCode2(inVarName: String, outVarName1: String, outVarName2: String, seed: Int): (String, Double) = {
     // two consecutive group-bys collapse into one keyed reduce, as for TPC-H on Wayang
     val g = groupField(seed)
-    (jobKeyedReduceCode(inVarName, outVarName2, keyUdf(g)), groupFields(g).toDouble)
+    (jobKeyedReduceCode(inVarName, outVarName2, g), groupFields(g).toDouble)
   }
 
   // ---- reduce ------------------------------------------------------------------------------
@@ -136,9 +138,9 @@ class JOBWayangTableOperatorManager(@(JsonIgnore @param @field @getter) protecte
        | .withName("Parse $name to tuple")
     """.stripMargin
 
-  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String =
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, field: String): String =
     s"""
-        |val $outVarName = $inVarName.reduceByKey($keyUdf, (t1, t2) => t1)
+        |val $outVarName = $inVarName.reduceByKey(${keyUdf(field)}, (t1, t2) => t1)
       """.stripMargin
 
   protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String =
@@ -159,8 +161,8 @@ class JOBSparkTableOperatorManager(@(JsonIgnore @param @field @getter) protected
   protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String =
     sparkSourceCode(outVarName, file, parser, name)
 
-  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, keyUdf: String): String =
-    sparkKeyedReduceCode(inVarName, outVarName, keyUdf)
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, field: String): String =
+    sparkKeyedReduceCode(inVarName, outVarName, keyUdf(field))
 
   protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String =
     sparkGlobalReduceCode(inVarName, outVarName)
@@ -168,3 +170,28 @@ class JOBSparkTableOperatorManager(@(JsonIgnore @param @field @getter) protected
   protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String =
     sparkSortCode(inVarName, outVarName, index)
 }
+
+/** JOB table as SQL (one CTE per operator, see [[AbstractSQLTableOperatorManager]]). */
+class JOBSQLTableOperatorManager(@(JsonIgnore @param @field @getter) protected val table: JOBTable, protected val stats: JOBTableStats)
+  extends AbstractSQLTableOperatorManager with JOBTableLogic {
+
+  protected def jobSourceCode(outVarName: String, file: String, parser: String, name: String): String =
+    sqlCte(outVarName, s"SELECT * FROM $name")
+
+  /** NULL text keys are grouped together with "", as in the dataflow jobs (and in JOB_MetaDataAnalyzer's counts). */
+  protected def jobKeyedReduceCode(inVarName: String, outVarName: String, field: String): String = {
+    val c = table.column(field)
+    val keyExpr = if (!c.isInt && c.nullable) s"COALESCE($field, '')" else field
+    sqlKeyedReduceCode(inVarName, outVarName, field, keyExpr)
+  }
+
+  protected def jobGlobalReduceCode(inVarName: String, outVarName: String): String =
+    sqlGlobalReduceCode(inVarName, outVarName)
+
+  protected def jobSortCode(inVarName: String, outVarName: String, index: Int): String =
+    sqlSortCode(inVarName, outVarName, table.columns(index - 1).name)
+
+  override protected def jobFilterCode(inVarName: String, outVarName: String, p: JOBPredicate): String =
+    sqlFilterCode(inVarName, outVarName, p.sqlCondition)
+}
+

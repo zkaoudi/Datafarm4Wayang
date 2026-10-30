@@ -68,6 +68,10 @@ trait AbstractDatasetOperatorManager {
   def sparkJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
     throw new Exception(s"""TARGET_PLATFORM "Spark" is not supported by ${getClass.getSimpleName}""")
 
+  /** Wraps the generated operator code into a SQL job. Only datasets with SQL code generation override this. */
+  def sqlJob(jobBody: String, jobName: String, tables: Seq[AbstractTableOperatorManager]): AbstractJob =
+    throw new Exception(s"""TARGET_PLATFORM "SQL" is not supported by ${getClass.getSimpleName}""")
+
 
   val maxAttempts = 100
   val random: Random.type = Random
@@ -154,8 +158,8 @@ object AbstractDatasetOperatorManager {
   def apply(s: String, p: String): AbstractDatasetOperatorManager = {
     if (s == "TPCH")
       new TPCHDatasetOperatorManager(p)
-    else if (s == "IMDB" && p == "Spark")
-      throw new Exception("DATA_MANAGER \"IMDB\" does not support TARGET_PLATFORM \"Spark\"")
+    else if (s == "IMDB" && (p == "Spark" || p == "SQL"))
+      throw new Exception(s"""DATA_MANAGER "IMDB" does not support TARGET_PLATFORM "$p"""")
     else if (s == "IMDB")
       IMDBKDatasetOperatorManager
     else if (s == "JOB")

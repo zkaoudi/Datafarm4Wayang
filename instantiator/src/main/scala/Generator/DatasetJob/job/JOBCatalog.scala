@@ -70,12 +70,29 @@ case class JOBPredicate(table: String, field: String, op: String, values: Seq[St
     }
   }
 
+  /** Human-readable form, e.g. `title.production_year > 2000` (used in the job info JSON). */
   def sql: String = op match {
     case "is null" | "is not null" => s"$table.$field $op"
     case "between" => s"$table.$field between ${q(values(0))} and ${q(values(1))}"
     case "in" => s"$table.$field in (${values.map(q).mkString(", ")})"
     case "mod" => s"$table.$field % ${values(0)} = ${values(1)}"
     case _ => s"$table.$field $op ${q(values.head)}"
+  }
+
+  /**
+    * Standard SQL condition on the bare column, e.g. `production_year > 2000`. SQL's NULL semantics
+    * match the generated dataflow code (NULL never satisfies a predicate except `is null`).
+    */
+  def sqlCondition: String = op match {
+    case "is null" => s"$field IS NULL"
+    case "is not null" => s"$field IS NOT NULL"
+    case "between" => s"$field BETWEEN ${q(values(0))} AND ${q(values(1))}"
+    case "in" => s"$field IN (${values.map(q).mkString(", ")})"
+    case "mod" => s"$field % ${values(0)} = ${values(1)}"
+    case "like" => s"$field LIKE ${q(values.head)}"
+    case "not like" => s"$field NOT LIKE ${q(values.head)}"
+    case "!=" => s"$field <> ${q(values.head)}"
+    case _ => s"$field $op ${q(values.head)}"
   }
 
   private def q(s: String) = if (column.isInt) s else "'" + s.replace("'", "''") + "'"

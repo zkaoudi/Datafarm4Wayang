@@ -30,6 +30,9 @@ trait AbstractTableOperatorManager {
 
   def filterFields: Seq[String] = filterFieldValue.keys.toSeq
 
+  /** Name of `field` as a column in a SQL database (the SQL target); the field name by default. */
+  def sqlColumn(field: String): String = field
+
 
   //Operators to implement
 
