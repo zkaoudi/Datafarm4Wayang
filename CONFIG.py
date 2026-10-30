@@ -21,7 +21,7 @@ class CONFIG:
     N_JOBS = 1
     N_VERSIONS = 1
     JOB_SEED = 42  # -1 | 0
-    DATA_MANAGER = "TPCH"  # "TPCH" | "IMDB"
+    DATA_MANAGER = "TPCH"  # "TPCH" | "IMDB" | "JOB" (JOB requires TARGET_PLATFORM = "Wayang")
     TARGET_PLATFORM = "Wayang"  # "Flink" | "Wayang"
     #################################################################
 

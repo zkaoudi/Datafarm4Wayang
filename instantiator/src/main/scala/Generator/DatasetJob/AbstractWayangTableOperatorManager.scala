@@ -73,7 +73,7 @@ trait AbstractWayangTableOperatorManager extends AbstractTableOperatorManager {
   }
 
   override def buildJoinCode(lxVarName: String, rxVarName: String, outVarName: String, joinRelation: JoinRelation): String = {
-    val lxJFieldId = joinRelation.lx.fields(joinRelation.field).toInt
+    val lxJFieldId = joinRelation.lx.fields(joinRelation.lxField).toInt
     val rxJFieldId = joinRelation.rx.fields(joinRelation.field).toInt
 
     s"""

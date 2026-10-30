@@ -222,7 +222,7 @@ case class JobGenerator(abstractPlan: AbstractExecutionPlan, datasetOperatorMana
     val operatorCodes = _generate(abstractPlan: AbstractExecutionPlan, entryOpId: String)
     //println(operatorCodes)
     if(platform == "Wayang") {
-      AbstractWayangJob(operatorCodes.mkString("\n"), jobName, saveExecutionPlan = saveExecutionPlan)
+      datasetOperatorManager.wayangJob(operatorCodes.mkString("\n"), jobName, saveExecutionPlan, tableSequence.map(_.tableName).distinct)
     } else {
       AbstractFlinkJob(operatorCodes.mkString("\n"), jobName, saveExecutionPlan = saveExecutionPlan)
     }
@@ -240,11 +240,11 @@ object JobGenerator {
         "abstractPlansSource" -> args(3),
         "genJobsDest" -> args(4),
         "jobSeed" -> args.lift(5).getOrElse("-1"),
-        "targetPlatform" -> args(6)
+        "targetPlatform" -> args.lift(6).getOrElse("Flink")
 
       )
     else
-      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager> <abstractPlansSource> <genJobsDest> [jobSeed]")
+      throw new Exception("Expected arguments: <nJobs> <nVersions> <dataManager: TPCH|IMDB|JOB> <abstractPlansSource> <genJobsDest> [jobSeed] [targetPlatform: Flink|Wayang]")
     params
   }
 

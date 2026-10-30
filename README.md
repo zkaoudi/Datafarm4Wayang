@@ -59,7 +59,7 @@ DataFarm can be configured to generate datasets with different characteristics:
 - `N_JOBS` defines the number of diverse Abstract Plans that will be generated.
 - `N_VERSIONS` defined the number of versions that will be generated for each Abstract Plan.
 - `JOB_SEED` can be specified to make the generation process replicable. If -1 the generation process is random. Otherwise, if >-1 the system will use the specified seed.
-- `DATA_MANAGER` specifies the database manager to be used. The current implementation already implements the TPC-H database manager. You can use it specifying "TPCH".
+- `DATA_MANAGER` specifies the database manager to be used: "TPCH" for TPC-H, "JOB" for the Join Order Benchmark on IMDB (Wayang only, see [Join Order Benchmark (JOB)](#join-order-benchmark-job)).
 - `DATA_ID` specifies the id of the input data meta-data that has to be used by the system. The input data meta-data can be specified in `TableMetaData.py`.
 - `EXPERIMENT_ID` defines the id of the experiment. It will be the name of the folder where the results of the generation process will be stored.
 
@@ -84,3 +84,47 @@ Finally, you should also specify which are the fields that contains dates.
 Then, also the raw cardinalities of the tables under exam should be specified.
 
 To have an example of `TableMetaData` configuration, please look at the `TableMetaData.py` file.
+
+## Join Order Benchmark (JOB)
+DataFarm can also generate Wayang jobs over the IMDB database of the Join Order Benchmark
+([Leis et al., PVLDB 2015](https://www.vldb.org/pvldb/vol9/p204-leis.pdf)).
+
+```Python
+DATA_MANAGER = "JOB"
+TARGET_PLATFORM = "Wayang"
+```
+
+**Data.** The jobs read the 21 IMDB CSV files of the original JOB dump (`title.csv`, `cast_info.csv`, ...) from
+the `datapath` argument of the generated job. Each generated `JobXvY.scala` contains its own parser object
+(`JobXvYParsers`), so no JOB-specific classes are needed on the Wayang side. Integer columns become `Long`
+(NULL is `Long.MinValue`), text columns `String` (NULL is `null`).
+
+**What gets generated.** Tables, columns and join edges follow the JOB schema
+([gregrahn/join-order-benchmark](https://github.com/gregrahn/join-order-benchmark)). Joins use the equi-join
+edges that occur in the 113 JOB queries, including the direct `movie_id`/`person_id` joins between fact tables.
+Filters are taken from the JOB queries (e.g. `company_name.country_code = '[us]'`, `title.production_year > 2000`,
+`keyword.keyword in (...)`); tables that JOB never filters directly (`aka_title`, `complete_cast`,
+`movie_keyword`, `movie_link`) get `id % m = 0` predicates. All of this lives in
+`instantiator/src/main/resources/job/job_catalog.json`; edit it to add or remove predicates.
+
+**Statistics.** Selectivities, distinct counts and table sizes depend on your IMDB snapshot. Only the values of
+the small lookup tables are filled in; everything else is `null` and is recorded as `-1` in
+`generated_jobs_info.json` until you measure it:
+
+```bash
+python generator_labeler/DatasetMetadata/JOB_MetaDataAnalyzer.py /path/to/imdb_csv_dir
+```
+
+This writes the measured values into the catalog (use `--output` to write elsewhere and point the generator to it
+with the environment variable `DATAFARM_JOB_CATALOG`). The analyzer uses the same parsing and NULL semantics as the
+generated jobs.
+
+**Limitations.**
+- Job shapes (number of joins, operator sequence) come from the abstract plans, which are learned from the input
+  workload in `data/input_workload_exec_plan`. With the bundled TPC-H workload, jobs have at most three joins,
+  while JOB queries have 4 to 17; add plans with more joins to the input workload to get JOB-sized jobs.
+- Joins over fact tables on `movie_id` are many-to-many (as in JOB) and can produce very large intermediate results
+  when no selective filter precedes them.
+- `JOB_SEED` set to a fixed value makes every version `j` of every plan start from the same table; use `-1` for
+  more variety.
+
