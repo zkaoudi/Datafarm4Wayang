@@ -107,6 +107,19 @@ Filters are taken from the JOB queries (e.g. `company_name.country_code = '[us]'
 `movie_keyword`, `movie_link`) get `id % m = 0` predicates. All of this lives in
 `instantiator/src/main/resources/job/job_catalog.json`; edit it to add or remove predicates.
 
+**Input workload.** With `DATA_MANAGER = "JOB"`, the abstract plans are learned from the JOB queries instead of
+TPC-H: `data/input_workload_exec_plan_job/` holds one plan per JOB query (113), built by
+`generator_labeler/JOB_InputWorkload.py` from the query text in the style of a hand-written Flink DataSet job
+(per table a source and, if filtered, a filter; a left-deep chain of joins; the `MIN(...)` aggregate as reduce; a sink).
+These plans describe the operator graph only, they were not produced by running Flink. Plan depth and the number
+of joins are learned from this workload (`INPUT_WORKLOAD` in `CONFIG.py`), so generated jobs have 1 to ~16 joins
+like JOB, and tables are reused at most as often as in a single JOB query. To rebuild the plans:
+
+```bash
+git clone https://github.com/gregrahn/join-order-benchmark
+python generator_labeler/JOB_InputWorkload.py join-order-benchmark data/input_workload_exec_plan_job
+```
+
 **Statistics.** Selectivities, distinct counts and table sizes depend on your IMDB snapshot. Only the values of
 the small lookup tables are filled in; everything else is `null` and is recorded as `-1` in
 `generated_jobs_info.json` until you measure it:
@@ -120,9 +133,11 @@ with the environment variable `DATAFARM_JOB_CATALOG`). The analyzer uses the sam
 generated jobs.
 
 **Limitations.**
-- Job shapes (number of joins, operator sequence) come from the abstract plans, which are learned from the input
-  workload in `data/input_workload_exec_plan`. With the bundled TPC-H workload, jobs have at most three joins,
-  while JOB queries have 4 to 17; add plans with more joins to the input workload to get JOB-sized jobs.
+- The generator keeps only the right-hand side of each join, so a job is a chain of joins in which each join
+  uses a column of the table joined last. Star-shaped JOB queries therefore become chains, mostly through the
+  `movie_id` joins between fact tables.
+- JOB queries contain only sources, filters, joins and an aggregate, so JOB-based jobs contain no map, group-by
+  or sort operators.
 - Joins over fact tables on `movie_id` are many-to-many (as in JOB) and can produce very large intermediate results
   when no selective filter precedes them.
 - `JOB_SEED` set to a fixed value makes every version `j` of every plan start from the same table; use `-1` for

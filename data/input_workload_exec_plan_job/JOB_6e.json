@@ -1,0 +1,213 @@
+{
+ "source": "Derived from JOB query 6e by generator_labeler/JOB_InputWorkload.py (operator graph only; not produced by Flink).",
+ "query": "6e",
+ "netRunTime": -1,
+ "executionPlan": {
+  "nodes": [
+   {
+    "id": 0,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "cast_info AS ci",
+    "parallelism": "1"
+   },
+   {
+    "id": 1,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "movie_keyword AS mk",
+    "parallelism": "1"
+   },
+   {
+    "id": 2,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = mk.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 0,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 1,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 3,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "keyword AS k",
+    "parallelism": "1"
+   },
+   {
+    "id": 4,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "k.keyword = 'marvel-cinematic-universe'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 3,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 5,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on k.id = mk.keyword_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 2,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 4,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 6,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "name AS n",
+    "parallelism": "1"
+   },
+   {
+    "id": 7,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "n.name LIKE '%Downey%Robert%'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 6,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 8,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on n.id = ci.person_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 5,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 7,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 9,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "title AS t",
+    "parallelism": "1"
+   },
+   {
+    "id": 10,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "t.production_year > 2000",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 9,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 11,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on t.id = mk.movie_id AND t.id = ci.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 8,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 10,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 12,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "combine: MIN(k.keyword) AS movie_keyword, MIN(n.name) AS actor_name, MIN(t.title) AS marvel_movie",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 11,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 13,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "reduce: MIN(k.keyword) AS movie_keyword, MIN(n.name) AS actor_name, MIN(t.title) AS marvel_movie",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 12,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 14,
+    "type": "sink",
+    "pact": "Data Sink",
+    "contents": "org.apache.flink.api.java.io.DiscardingOutputFormat",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 13,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ]
+   }
+  ]
+ }
+}

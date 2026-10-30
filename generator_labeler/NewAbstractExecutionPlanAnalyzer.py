@@ -19,13 +19,18 @@ sns.set_style("whitegrid")
 
 def parse_args(args):
     params = {}
-    if args.__len__() == 4:
+    if 4 <= args.__len__() <= 7:
         params["nJobs"] = int(args[1])
         params["originalExecPlanSource"] = args[2]
         params["genAbsPlanDest"] = args[3]
+        # only plan files whose name contains this string are used
+        params["planFilter"] = args[4] if args.__len__() > 4 else "TPC_H"
+        # -1 = learned from the input workload
+        params["maxDepth"] = int(args[5]) if args.__len__() > 5 else 6
+        params["maxJoins"] = int(args[6]) if args.__len__() > 6 else 3
     else:
         raise Exception(
-            "Expected arguments: <nJobs> <originalExecPlanSource> <genAbsPlanDest>"
+            "Expected arguments: <nJobs> <originalExecPlanSource> <genAbsPlanDest> [planFilter] [maxDepth] [maxJoins]"
         )
     return params
 
@@ -42,7 +47,11 @@ if __name__ == "__main__":
 
     exec_plans_json = planTools.load_exec_plans(params["originalExecPlanSource"])
 
-    exec_plans_json = [ep for ep in exec_plans_json if ("TPC_H" in ep[0])]
+    exec_plans_json = [ep for ep in exec_plans_json if (params["planFilter"] in ep[0])]
+    if not exec_plans_json:
+        raise Exception(
+            f"No plans matching '{params['planFilter']}' in '{params['originalExecPlanSource']}'"
+        )
 
     print(exec_plans_json)
 
@@ -50,7 +59,9 @@ if __name__ == "__main__":
         exec_plans_json, include_cycles=False
     )
 
-    absModel = AbstactPlanGeneratorModel(max_depth=6, max_joins=3, seed=42)
+    absModel = AbstactPlanGeneratorModel(
+        max_depth=params["maxDepth"], max_joins=params["maxJoins"], seed=42
+    )
 
     absModel.fit(exec_plans_graph)
 

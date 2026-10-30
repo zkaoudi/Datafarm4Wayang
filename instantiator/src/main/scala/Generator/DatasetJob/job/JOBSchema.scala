@@ -207,6 +207,11 @@ object JOBSchema {
     ("aka_name", "person_id") -> ("person_info", "person_id")
   )
 
+  /** How often each table occurs at most in a single JOB query (e.g. info_type AS it1, info_type AS it2). */
+  val maxOccurrences: Map[String, Int] = tables.map(_.name -> 1).toMap ++ Map(
+    "comp_cast_type" -> 2, "company_name" -> 2, "info_type" -> 2, "kind_type" -> 2,
+    "movie_companies" -> 2, "movie_info_idx" -> 2, "title" -> 2)
+
   /** table -> (join column -> (other table -> other table's join column)), in both directions. */
   val joinFieldTable: Map[String, Map[String, Map[String, String]]] = {
     val directed = joinEdges.flatMap { case (a, b) => Seq(a -> b, b -> a) }

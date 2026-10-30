@@ -1,0 +1,297 @@
+{
+ "source": "Derived from JOB query 8a by generator_labeler/JOB_InputWorkload.py (operator graph only; not produced by Flink).",
+ "query": "8a",
+ "netRunTime": -1,
+ "executionPlan": {
+  "nodes": [
+   {
+    "id": 0,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "aka_name AS an1",
+    "parallelism": "1"
+   },
+   {
+    "id": 1,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "cast_info AS ci",
+    "parallelism": "1"
+   },
+   {
+    "id": 2,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "ci.note ='(voice: English version)'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 1,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 3,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on an1.person_id = ci.person_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 0,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 2,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 4,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "movie_companies AS mc",
+    "parallelism": "1"
+   },
+   {
+    "id": 5,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "mc.note LIKE '%(Japan)%' AND mc.note NOT LIKE '%(USA)%'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 4,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 6,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = mc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 3,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 5,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 7,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "company_name AS cn",
+    "parallelism": "1"
+   },
+   {
+    "id": 8,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "cn.country_code ='[jp]'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 7,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 9,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on mc.company_id = cn.id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 6,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 8,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 10,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "name AS n1",
+    "parallelism": "1"
+   },
+   {
+    "id": 11,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "n1.name LIKE '%Yo%' AND n1.name NOT LIKE '%Yu%'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 10,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 12,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on an1.person_id = n1.id AND n1.id = ci.person_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 9,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 11,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 13,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "role_type AS rt",
+    "parallelism": "1"
+   },
+   {
+    "id": 14,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "rt.role ='actress'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 13,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 15,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.role_id = rt.id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 12,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 14,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 16,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "title AS t",
+    "parallelism": "1"
+   },
+   {
+    "id": 17,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = t.id AND t.id = mc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 15,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 16,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 18,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "combine: MIN(an1.name) AS actress_pseudonym, MIN(t.title) AS japanese_movie_dubbed",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 17,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 19,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "reduce: MIN(an1.name) AS actress_pseudonym, MIN(t.title) AS japanese_movie_dubbed",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 18,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 20,
+    "type": "sink",
+    "pact": "Data Sink",
+    "contents": "org.apache.flink.api.java.io.DiscardingOutputFormat",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 19,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ]
+   }
+  ]
+ }
+}
