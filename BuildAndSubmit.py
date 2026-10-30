@@ -72,7 +72,9 @@ def update_sbt(jp_path, target_conf="compile"):
 
 
 def get_job_projects():
-    return [jf for jf in os.listdir(CONFIG.GENERATED_JOB_FOLDER) if re.match(r"Job[0-9]+", jf)]
+    # Flink jobs are generated as one sbt project folder per job
+    return [jf for jf in os.listdir(CONFIG.GENERATED_JOB_FOLDER)
+            if re.fullmatch(r"Job[0-9]+v[0-9]+", jf) and os.path.isdir(os.path.join(CONFIG.GENERATED_JOB_FOLDER, jf))]
 
 
 def get_jar_path(job_path):
@@ -122,14 +124,16 @@ def submit(job_projects):
 
         print("Jar project path:", jp_path)
 
-        jar_path = get_jar_path(jp_path)
-        if jar_path.__len__() == 0:
+        jar_paths = get_jar_path(jp_path)
+        if jar_paths.__len__() == 0:
             #print("WARNING - Assembly many jobs if Flink is not provided can be very memory intensive!")
             os.system(f"cd {jp_path}; sbt assembly")
-            jar_path = get_jar_path(jp_path)
-
-            print("jar_path:", jar_path)
-            jar_path = jar_path[0]
+            jar_paths = get_jar_path(jp_path)
+        if jar_paths.__len__() == 0:
+            print(f"WARNING - No jar for {jp} after 'sbt assembly', skipping it.")
+            continue
+        jar_path = jar_paths[0]
+        print("jar_path:", jar_path)
 
         #Submit job to flink
 
