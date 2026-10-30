@@ -58,7 +58,7 @@ DataFarm can be configured to generate datasets with different characteristics:
 
 - `N_JOBS` defines the number of diverse Abstract Plans that will be generated.
 - `N_VERSIONS` defined the number of versions that will be generated for each Abstract Plan.
-- `JOB_SEED` can be specified to make the generation process replicable. If -1 the generation process is random. Otherwise, if >-1 the system will use the specified seed.
+- `JOB_SEED` makes the generation process replicable with a seed of your choice. With -1, each job's seed is derived from its plan index (also deterministic); otherwise it is derived from `JOB_SEED` and the plan index, so different plans still get different tables, filters and group-by fields.
 - `DATA_MANAGER` specifies the database manager to be used: "TPCH" for TPC-H, "JOB" for the Join Order Benchmark on IMDB (Wayang or Spark, see [Join Order Benchmark (JOB)](#join-order-benchmark-job)).
 - `TARGET_PLATFORM` specifies the platform the jobs are generated for: "Flink", "Wayang" or "Spark" (see [Spark jobs](#spark-jobs)).
 - `DATA_ID` specifies the id of the input data meta-data that has to be used by the system. The input data meta-data can be specified in `TableMetaData.py`.

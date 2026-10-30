@@ -108,6 +108,8 @@ trait AbstractDatasetOperatorManager {
           tmp_seed += 1
       }
     }
+    if (!success)
+      throw new Exception(s"Could not generate a sequence of $nJoins joins starting from seed $seed (tried ${attempt} seeds).")
     (tS, jS)
   }
 

@@ -5,7 +5,7 @@ package Generator.DatasetJob
   */
 object utils {
   def getElementBySeed(v:Seq[Any], s:Int): Any  ={
-    v(s%v.size)
+    v(Math.floorMod(s, v.size))
   }
 
 }

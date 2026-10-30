@@ -10,7 +10,7 @@ class CONFIG:
     GENERATED_JOB_INPUT_DATA_PATH = "/data"  # <absolute_path_to_input_data>
 
     # FLINK HOME
-    FLINK_HOME = "/opt/flink/bin"  # <path_to_flink>
+    FLINK_HOME = "/opt/flink"  # <path_to_flink> (the folder that contains bin/flink)
 
     # EXPERIMENT ID
     EXPERIMENT_ID = "WayangJobs"

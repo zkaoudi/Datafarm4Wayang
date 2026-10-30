@@ -19,7 +19,11 @@ from generator_labeler.TaskMonitor.TaskManagerClient import TaskDetailsParser
 
 def get_tables_features(df_tables, data_cardinality=False, factors=-1, verbose=True):
 
-    one_hot = sorted(list(set([t for tables in df_tables.values for t in tables])))
+    # The columns t_0, t_1, ... must mean the same table in every run, and all of them must exist
+    # (CONFIG.FEATURE_COLS lists them), so the vocabulary is every table known in data_cardinality,
+    # not only the tables that happen to occur in the generated jobs.
+    known_tables = set(t for d in data_cardinality.values() for t in d) if data_cardinality else set()
+    one_hot = sorted(known_tables | set([t for tables in df_tables.values for t in tables]))
     one_hot_enc = {one_hot[c]: c for c in range(one_hot.__len__())}
     one_hot_dec = {c: one_hot[c] for c in range(one_hot.__len__())}
     print("one_hot_enc:", one_hot_enc, "\none_hot_dec:", one_hot_dec)
@@ -37,7 +41,7 @@ def get_tables_features(df_tables, data_cardinality=False, factors=-1, verbose=T
     if data_cardinality:
         cards = []
         ks = []
-        for k, values in df_tables_enc.iteritems():
+        for k, values in df_tables_enc.items():
             new_values = [v * data_cardinality[k[1]][one_hot_dec[idx]] for idx, v in enumerate(values)]
             cards.append(new_values)
             ks.append(k)
