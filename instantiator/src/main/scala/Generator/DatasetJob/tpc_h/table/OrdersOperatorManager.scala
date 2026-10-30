@@ -60,7 +60,7 @@ case class OrdersOperatorManager() extends AbstractTableOperatorManager {
 
     //(s"""val $outVarName = $inVarName.filter(x=>x._5.getTime <= (dateFormatter.parseDateTime("1998-12-01").getMillis - 90L * 24L * 60L * 60L * 1000L))""", -1.0)
 
-    val field = filterFields(fieldSeed % filterFields.size)
+    val field = filterFields(Math.floorMod(fieldSeed, filterFields.size))
 
     var filterField = ""
     var filterValue = ""

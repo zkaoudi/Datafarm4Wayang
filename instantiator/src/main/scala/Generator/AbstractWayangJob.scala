@@ -52,7 +52,6 @@ object AbstractWayangJob {
        |val flinkConf = "provided" // "compile" | "provided"
        |
        |val flinkDependencies = Seq(
-  irintln("body: " + jobBody)
        |  "org.apache.flink" %% "flink-scala" % flinkVersion % flinkConf,
        |  "org.apache.flink" %% "flink-streaming-scala" % flinkVersion % flinkConf,
        |  "org.apache.flink" % "flink-hadoop-fs" % flinkVersion % "compile"
