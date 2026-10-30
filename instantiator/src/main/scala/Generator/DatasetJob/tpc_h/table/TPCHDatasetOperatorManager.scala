@@ -1,6 +1,8 @@
 package Generator.DatasetJob.tpc_h.table
 
+import Generator.{AbstractJob, AbstractWayangJob}
 import Generator.DatasetJob.{AbstractDatasetOperatorManager, AbstractTableOperatorManager,AbstractWayangTableOperatorManager}
+import Generator.DatasetJob.tpc_h.TPCHSchema
 
 import scala.collection.mutable
 import scala.util.Random
@@ -25,6 +27,14 @@ class TPCHDatasetOperatorManager extends AbstractDatasetOperatorManager {
     this()
     this.platform = platform
   }
+  /** Wayang jobs get their own TPC-H parsers object, so they need no TPC-H classes in Wayang. */
+  override def wayangJob(jobBody: String, jobName: String, saveExecutionPlan: Boolean, tables: Seq[String]): AbstractJob = {
+    val parsersObject = jobName + "Parsers"
+    AbstractWayangJob(
+      jobBody.replace(TPCHSchema.ParsersToken, parsersObject), jobName, saveExecutionPlan,
+      title = "TPC-H", parsers = TPCHSchema.parsersCode(parsersObject, tables))
+  }
+
   def getTableOperatorManager(s: String, p: String): AbstractTableOperatorManager  = 
   p match {
     case "Wayang" => {

@@ -47,7 +47,8 @@ trait AbstractTableOperatorManager {
 
   def buildFilterCode(inVarName: String, outVarName: String, filterField: String, filterValue: String, filterOp: String = "<="): String = {
     filterValue.trim match {
-      // date filters are written as CsvUtils.parseDate("yyyy-MM-dd") (Wayang); in Flink jobs the field is a java.sql.Date
+      // date filter values are written as the marker CsvUtils.parseDate("yyyy-MM-dd"); in Flink jobs the field is a
+      // java.sql.Date (Wayang jobs compare yyyymmdd integers, see AbstractWayangTableOperatorManager)
       case AbstractTableOperatorManager.ParseDate(date) =>
         s"""
            |val $outVarName = $inVarName.filter(x=>x._$filterField.getTime $filterOp dateFormatter.parseDateTime("$date").getMillis)

@@ -85,6 +85,33 @@ Then, also the raw cardinalities of the tables under exam should be specified.
 
 To have an example of `TableMetaData` configuration, please look at the `TableMetaData.py` file.
 
+## Wayang jobs
+With `TARGET_PLATFORM = "Wayang"`, each generated job is a single self-contained file
+`generated_jobs/JobXvY.scala` that compiles against [Apache Wayang](https://github.com/apache/incubator-wayang)
+main (Scala 2.12, Java 17). It only uses the public Wayang API, i.e. these modules:
+
+```
+org.apache.wayang:wayang-api-scala-java
+org.apache.wayang:wayang-java
+org.apache.wayang:wayang-spark
+```
+
+A job file contains, in package `org.apache.wayang.datafarm.generated`:
+
+- `object JobXvY` with
+  - `buildPlan(planBuilder: PlanBuilder, datapath: String): DataQuanta[_]`, which builds the job's plan and
+    returns its final `DataQuanta` without executing anything, and
+  - `main(args)` with arguments `<platforms> <datapath>`: it registers the platforms (`java`, `spark` or
+    `java,spark`), executes the plan by collecting its output, and prints the number of output records and
+    the runtime. `datapath` is the folder with the input files; a local path is turned into a `file:` URL.
+- `object JobXvYParsers` with the CSV parser of each table the job reads, so no dataset classes are needed
+  on the Wayang side.
+
+For TPC-H, the jobs read the dbgen `.tbl` files from `datapath`. Rows become tuples with one element per column
+in `.tbl` order: identifiers and integers are `Int`, decimals `Double`, dates `Int` in the form yyyymmdd
+(date filters compare these integers), text `String`. The column order is defined in
+`instantiator/src/main/scala/Generator/DatasetJob/tpc_h/TPCHSchema.scala`.
+
 ## Join Order Benchmark (JOB)
 DataFarm can also generate Wayang jobs over the IMDB database of the Join Order Benchmark
 ([Leis et al., PVLDB 2015](https://www.vldb.org/pvldb/vol9/p204-leis.pdf)).
