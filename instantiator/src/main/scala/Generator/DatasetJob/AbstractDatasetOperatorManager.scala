@@ -1,7 +1,8 @@
 package Generator.DatasetJob
 
-import Generator.DatasetHelper
+import Generator.{AbstractJob, AbstractWayangJob, DatasetHelper}
 import Generator.DatasetJob.imdb_kaggle.table.IMDBKDatasetOperatorManager
+import Generator.DatasetJob.job.JOBDatasetOperatorManager
 import Generator.DatasetJob.tpc_h.table.TPCHDatasetOperatorManager
 import Generator.DatasetJob.utils.getElementBySeed
 
@@ -12,15 +13,35 @@ import scala.util.Random
   * Created by researchuser7 on 2020-04-20.
   */
 
-case class JoinRelation(lx: AbstractTableOperatorManager, rx: AbstractTableOperatorManager, field: String) {
+/**
+  * An equi-join between two tables: `lx.lxField = rx.field`.
+  *
+  * `field` is the join column of the right-hand table `rx`; `lxField` is the join column of the
+  * left-hand table `lx`. In TPC-H both sides always use the same column name (e.g. ORDERKEY), so
+  * the three-argument constructor sets `lxField = field`. Schemas like JOB/IMDB join columns with
+  * different names (e.g. `cast_info.movie_id = title.id`) and need the four-argument form.
+  */
+case class JoinRelation(lx: AbstractTableOperatorManager, rx: AbstractTableOperatorManager, field: String, lxField: String) {
   override def equals(joinRelation: Any): Boolean = {
     joinRelation match {
-      case jr: JoinRelation => ((rx == jr.rx) && (lx == jr.lx) && (field == jr.field)) || ((rx == jr.lx) && (lx == jr.rx) && (field == jr.field))
+      case jr: JoinRelation =>
+        ((lx == jr.lx) && (rx == jr.rx) && (lxField == jr.lxField) && (field == jr.field)) ||
+          ((lx == jr.rx) && (rx == jr.lx) && (lxField == jr.field) && (field == jr.lxField))
       case _ => false
     }
   }
 
-  override def toString: String = f"$lx%10s - $rx%10s : $field%10s "
+  override def hashCode(): Int = Set((lx.tableName, lxField), (rx.tableName, field)).hashCode()
+
+  override def toString: String =
+    if (lxField == field) f"$lx%10s - $rx%10s : $field%10s "
+    else f"$lx%10s - $rx%10s : $lxField%10s = $field%-10s "
+}
+
+object JoinRelation {
+  /** Join on a column that has the same name in both tables (the TPC-H convention). */
+  def apply(lx: AbstractTableOperatorManager, rx: AbstractTableOperatorManager, field: String): JoinRelation =
+    JoinRelation(lx, rx, field, field)
 }
 
 trait AbstractDatasetOperatorManager {
@@ -30,8 +51,16 @@ trait AbstractDatasetOperatorManager {
   var platform : String = "Flink"
 
   def getTableOperatorManager(s: String,p: String): AbstractTableOperatorManager
-  
-  
+
+  /**
+    * Wraps the generated operator code into a Wayang job. Datasets that need extra definitions in
+    * the generated file (e.g. their own CSV parsers) override this.
+    *
+    * @param tables names of the tables the job reads
+    */
+  def wayangJob(jobBody: String, jobName: String, saveExecutionPlan: Boolean, tables: Seq[String]): AbstractJob =
+    AbstractWayangJob(jobBody, jobName, saveExecutionPlan = saveExecutionPlan)
+
 
   val maxAttempts = 100
   val random: Random.type = Random
@@ -49,7 +78,7 @@ trait AbstractDatasetOperatorManager {
 
     var t1_OpMan = getTableOperatorManager(t0_jTable,platform)
 
-    JoinRelation(t0_OpMan, t1_OpMan, t0_jTableField)
+    JoinRelation(t0_OpMan, t1_OpMan, t0_jTableField, t0_jField)
   }
 
   def getSourceTableSequence(nJoins: Int, seed: Int = 0): (Seq[AbstractTableOperatorManager], Seq[JoinRelation]) = {
@@ -120,6 +149,8 @@ object AbstractDatasetOperatorManager {
       new TPCHDatasetOperatorManager(p)
     else if (s == "IMDB")
       IMDBKDatasetOperatorManager
+    else if (s == "JOB")
+      new JOBDatasetOperatorManager(p)
     else
       throw new Exception(s"Can not find Dataset Operator Manger '$s'.")
   }

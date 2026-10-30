@@ -87,7 +87,7 @@ trait AbstractTableOperatorManager {
   }
 
   def buildJoinCode(lxVarName: String, rxVarName: String, outVarName: String, joinRelation: JoinRelation): String = {
-    val lxJFieldId = joinRelation.lx.fields(joinRelation.field).toInt - 1
+    val lxJFieldId = joinRelation.lx.fields(joinRelation.lxField).toInt - 1
     val rxJFieldId = joinRelation.rx.fields(joinRelation.field).toInt - 1
 
     s"""

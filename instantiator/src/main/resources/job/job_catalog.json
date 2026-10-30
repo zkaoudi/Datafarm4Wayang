@@ -1,0 +1,1086 @@
+{
+  "about": "Filter predicates and statistics for generating Join Order Benchmark (JOB) jobs. Predicates are taken from the 113 JOB queries (jobQueries = number of queries using the predicate); 'mod' predicates are added for tables JOB never filters directly. selectivity = fraction of the table's rows that satisfy the predicate, distinct = number of distinct values of a group field, rows = table cardinality. Values that depend on the IMDB snapshot are null until generator_labeler/DatasetMetadata/JOB_MetaDataAnalyzer.py measures them; null selectivities are recorded as -1 in generated_jobs_info.json.",
+  "measuredOn": null,
+  "tables": {
+    "aka_name": {
+      "rows": null,
+      "distinct": {
+        "person_id": null
+      },
+      "filters": [
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%a%",
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "A%",
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "aka_title": {
+      "rows": null,
+      "distinct": {
+        "movie_id": null,
+        "kind_id": null,
+        "production_year": null
+      },
+      "filters": [
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            2,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            4,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            10,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        }
+      ]
+    },
+    "cast_info": {
+      "rows": null,
+      "distinct": {
+        "role_id": null,
+        "movie_id": null,
+        "person_id": null
+      },
+      "filters": [
+        {
+          "field": "note",
+          "op": "in",
+          "value": [
+            "(writer)",
+            "(head writer)",
+            "(written by)",
+            "(story)",
+            "(story editor)"
+          ],
+          "selectivity": null,
+          "jobQueries": 11
+        },
+        {
+          "field": "note",
+          "op": "in",
+          "value": [
+            "(voice)",
+            "(voice: Japanese version)",
+            "(voice) (uncredited)",
+            "(voice: English version)"
+          ],
+          "selectivity": null,
+          "jobQueries": 9
+        },
+        {
+          "field": "note",
+          "op": "in",
+          "value": [
+            "(voice)",
+            "(voice) (uncredited)",
+            "(voice: English version)"
+          ],
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "note",
+          "op": "=",
+          "value": "(voice)",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "note",
+          "op": "in",
+          "value": [
+            "(producer)",
+            "(executive producer)"
+          ],
+          "selectivity": null,
+          "jobQueries": 1
+        },
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%(producer)%",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%(uncredited)%",
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "char_name": {
+      "rows": null,
+      "distinct": {
+        "imdb_index": null
+      },
+      "filters": [
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%man%",
+          "selectivity": null,
+          "jobQueries": 4
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Man%",
+          "selectivity": null,
+          "jobQueries": 4
+        },
+        {
+          "field": "name",
+          "op": "=",
+          "value": "Queen",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Iron%Man%",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Tony%Stark%",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "name",
+          "op": "not like",
+          "value": "%Sherlock%",
+          "selectivity": null,
+          "jobQueries": 2
+        }
+      ]
+    },
+    "comp_cast_type": {
+      "rows": 4,
+      "distinct": {
+        "kind": 4
+      },
+      "filters": [
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "cast",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 12
+        },
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "complete+verified",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 9
+        },
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "complete",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 3
+        },
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "crew",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "kind",
+          "op": "like",
+          "value": "%complete%",
+          "selectivity": 0.5,
+          "basis": "lookup table: 2 of 4 unique labels",
+          "jobQueries": 6
+        },
+        {
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "cast",
+            "crew"
+          ],
+          "selectivity": 0.5,
+          "basis": "lookup table: 2 of 4 unique labels",
+          "jobQueries": 4
+        }
+      ],
+      "rowsBasis": "comp_cast_type is a lookup table with 4 rows"
+    },
+    "company_name": {
+      "rows": null,
+      "distinct": {
+        "country_code": null
+      },
+      "filters": [
+        {
+          "field": "country_code",
+          "op": "=",
+          "value": "[us]",
+          "selectivity": null,
+          "jobQueries": 37
+        },
+        {
+          "field": "country_code",
+          "op": "!=",
+          "value": "[pl]",
+          "selectivity": null,
+          "jobQueries": 10
+        },
+        {
+          "field": "country_code",
+          "op": "!=",
+          "value": "[us]",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Film%",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Warner%",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "Lionsgate%",
+          "selectivity": null,
+          "jobQueries": 3
+        }
+      ]
+    },
+    "company_type": {
+      "rows": 4,
+      "distinct": {
+        "kind": 4
+      },
+      "filters": [
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "production companies",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 22
+        },
+        {
+          "field": "kind",
+          "op": "!=",
+          "value": "production companies",
+          "selectivity": 0.75,
+          "basis": "lookup table: 3 of 4 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "distributors",
+          "selectivity": 0.25,
+          "basis": "lookup table: 1 of 4 unique labels",
+          "jobQueries": 1
+        }
+      ],
+      "rowsBasis": "company_type is a lookup table with 4 rows"
+    },
+    "complete_cast": {
+      "rows": null,
+      "distinct": {
+        "subject_id": null,
+        "status_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            2,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            4,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            10,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        }
+      ]
+    },
+    "info_type": {
+      "rows": 113,
+      "distinct": {
+        "info": 113
+      },
+      "filters": [
+        {
+          "field": "info",
+          "op": "=",
+          "value": "genres",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 13
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "countries",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 10
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "release dates",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 20
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "rating",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 26
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "votes",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 11
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "budget",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "mini biography",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 3
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "top 250 rank",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "bottom 10 rank",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 3
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "trivia",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "info",
+          "op": "=",
+          "value": "height",
+          "selectivity": 0.00885,
+          "basis": "lookup table: 1 of 113 unique labels",
+          "jobQueries": 1
+        }
+      ],
+      "rowsBasis": "info_type is a lookup table with 113 rows"
+    },
+    "keyword": {
+      "rows": null,
+      "distinct": {
+        "phonetic_code": null
+      },
+      "filters": [
+        {
+          "field": "keyword",
+          "op": "=",
+          "value": "character-name-in-title",
+          "selectivity": null,
+          "jobQueries": 15
+        },
+        {
+          "field": "keyword",
+          "op": "=",
+          "value": "sequel",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "keyword",
+          "op": "=",
+          "value": "marvel-cinematic-universe",
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "keyword",
+          "op": "=",
+          "value": "computer-animation",
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "keyword",
+          "op": "in",
+          "value": [
+            "murder",
+            "murder-in-title",
+            "blood",
+            "violence"
+          ],
+          "selectivity": null,
+          "jobQueries": 9
+        },
+        {
+          "field": "keyword",
+          "op": "in",
+          "value": [
+            "murder",
+            "violence",
+            "blood",
+            "gore",
+            "death",
+            "female-nudity",
+            "hospital"
+          ],
+          "selectivity": null,
+          "jobQueries": 7
+        },
+        {
+          "field": "keyword",
+          "op": "in",
+          "value": [
+            "superhero",
+            "sequel",
+            "second-part",
+            "marvel-comics",
+            "based-on-comic",
+            "tv-special",
+            "fight",
+            "violence"
+          ],
+          "selectivity": null,
+          "jobQueries": 5
+        },
+        {
+          "field": "keyword",
+          "op": "like",
+          "value": "%sequel%",
+          "selectivity": null,
+          "jobQueries": 6
+        }
+      ]
+    },
+    "kind_type": {
+      "rows": 7,
+      "distinct": {
+        "kind": 7
+      },
+      "filters": [
+        {
+          "field": "kind",
+          "op": "=",
+          "value": "movie",
+          "selectivity": 0.142857,
+          "basis": "lookup table: 1 of 7 unique labels",
+          "jobQueries": 12
+        },
+        {
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "movie",
+            "episode"
+          ],
+          "selectivity": 0.285714,
+          "basis": "lookup table: 2 of 7 unique labels",
+          "jobQueries": 8
+        },
+        {
+          "field": "kind",
+          "op": "in",
+          "value": [
+            "movie",
+            "tv movie",
+            "video movie",
+            "video game"
+          ],
+          "selectivity": 0.571429,
+          "basis": "lookup table: 4 of 7 unique labels",
+          "jobQueries": 1
+        }
+      ],
+      "rowsBasis": "kind_type is a lookup table with 7 rows"
+    },
+    "link_type": {
+      "rows": null,
+      "distinct": {
+        "link": null
+      },
+      "filters": [
+        {
+          "field": "link",
+          "op": "like",
+          "value": "%follow%",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "link",
+          "op": "=",
+          "value": "features",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "link",
+          "op": "in",
+          "value": [
+            "sequel",
+            "follows",
+            "followed by"
+          ],
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "link",
+          "op": "in",
+          "value": [
+            "references",
+            "referenced in",
+            "features",
+            "featured in"
+          ],
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "movie_companies": {
+      "rows": null,
+      "distinct": {
+        "company_type_id": null,
+        "company_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%(200%)%",
+          "selectivity": null,
+          "jobQueries": 10
+        },
+        {
+          "field": "note",
+          "op": "not like",
+          "value": "%(USA)%",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "note",
+          "op": "is null",
+          "selectivity": null,
+          "jobQueries": 8
+        },
+        {
+          "field": "note",
+          "op": "is not null",
+          "selectivity": null,
+          "jobQueries": 4
+        },
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%(worldwide)%",
+          "selectivity": null,
+          "jobQueries": 6
+        },
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%(USA)%",
+          "selectivity": null,
+          "jobQueries": 6
+        }
+      ]
+    },
+    "movie_info": {
+      "rows": null,
+      "distinct": {
+        "info_type_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "info",
+          "op": "in",
+          "value": [
+            "Horror",
+            "Thriller"
+          ],
+          "selectivity": null,
+          "jobQueries": 5
+        },
+        {
+          "field": "info",
+          "op": "in",
+          "value": [
+            "Sweden",
+            "Norway",
+            "Germany",
+            "Denmark",
+            "Swedish",
+            "Danish",
+            "Norwegian",
+            "German",
+            "USA",
+            "American"
+          ],
+          "selectivity": null,
+          "jobQueries": 5
+        },
+        {
+          "field": "info",
+          "op": "in",
+          "value": [
+            "Horror",
+            "Action",
+            "Sci-Fi",
+            "Thriller",
+            "Crime",
+            "War"
+          ],
+          "selectivity": null,
+          "jobQueries": 4
+        },
+        {
+          "field": "info",
+          "op": "like",
+          "value": "USA:% 200%",
+          "selectivity": null,
+          "jobQueries": 6
+        },
+        {
+          "field": "info",
+          "op": "like",
+          "value": "Japan:%200%",
+          "selectivity": null,
+          "jobQueries": 4
+        },
+        {
+          "field": "note",
+          "op": "like",
+          "value": "%internet%",
+          "selectivity": null,
+          "jobQueries": 7
+        }
+      ]
+    },
+    "movie_info_idx": {
+      "rows": null,
+      "distinct": {
+        "info_type_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "info",
+          "op": ">",
+          "value": "8.0",
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "info",
+          "op": "<",
+          "value": "8.5",
+          "selectivity": null,
+          "jobQueries": 6
+        },
+        {
+          "field": "info",
+          "op": ">",
+          "value": "7.0",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "info",
+          "op": "<",
+          "value": "7.0",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "info",
+          "op": ">",
+          "value": "5.0",
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "movie_keyword": {
+      "rows": null,
+      "distinct": {
+        "keyword_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            2,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            4,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            10,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        }
+      ]
+    },
+    "movie_link": {
+      "rows": null,
+      "distinct": {
+        "link_type_id": null,
+        "movie_id": null
+      },
+      "filters": [
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            2,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            4,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        },
+        {
+          "field": "id",
+          "op": "mod",
+          "value": [
+            10,
+            0
+          ],
+          "selectivity": null,
+          "jobQueries": 0
+        }
+      ]
+    },
+    "name": {
+      "rows": null,
+      "distinct": {
+        "gender": null,
+        "imdb_index": null
+      },
+      "filters": [
+        {
+          "field": "gender",
+          "op": "=",
+          "value": "f",
+          "selectivity": null,
+          "jobQueries": 16
+        },
+        {
+          "field": "gender",
+          "op": "=",
+          "value": "m",
+          "selectivity": null,
+          "jobQueries": 13
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%An%",
+          "selectivity": null,
+          "jobQueries": 7
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "%Downey%Robert%",
+          "selectivity": null,
+          "jobQueries": 6
+        },
+        {
+          "field": "name",
+          "op": "like",
+          "value": "B%",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "name_pcode_cf",
+          "op": "like",
+          "value": "D%",
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "person_info": {
+      "rows": null,
+      "distinct": {
+        "info_type_id": null,
+        "person_id": null
+      },
+      "filters": [
+        {
+          "field": "note",
+          "op": "=",
+          "value": "Volker Boehm",
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "note",
+          "op": "is not null",
+          "selectivity": null,
+          "jobQueries": 1
+        }
+      ]
+    },
+    "role_type": {
+      "rows": 12,
+      "distinct": {
+        "role": 12
+      },
+      "filters": [
+        {
+          "field": "role",
+          "op": "=",
+          "value": "actress",
+          "selectivity": 0.083333,
+          "basis": "lookup table: 1 of 12 unique labels",
+          "jobQueries": 15
+        },
+        {
+          "field": "role",
+          "op": "=",
+          "value": "actor",
+          "selectivity": 0.083333,
+          "basis": "lookup table: 1 of 12 unique labels",
+          "jobQueries": 2
+        },
+        {
+          "field": "role",
+          "op": "=",
+          "value": "writer",
+          "selectivity": 0.083333,
+          "basis": "lookup table: 1 of 12 unique labels",
+          "jobQueries": 1
+        },
+        {
+          "field": "role",
+          "op": "=",
+          "value": "costume designer",
+          "selectivity": 0.083333,
+          "basis": "lookup table: 1 of 12 unique labels",
+          "jobQueries": 1
+        }
+      ],
+      "rowsBasis": "role_type is a lookup table with 12 rows"
+    },
+    "title": {
+      "rows": null,
+      "distinct": {
+        "kind_id": null,
+        "production_year": null
+      },
+      "filters": [
+        {
+          "field": "production_year",
+          "op": ">",
+          "value": 2000,
+          "selectivity": null,
+          "jobQueries": 18
+        },
+        {
+          "field": "production_year",
+          "op": ">",
+          "value": 2005,
+          "selectivity": null,
+          "jobQueries": 10
+        },
+        {
+          "field": "production_year",
+          "op": ">",
+          "value": 2010,
+          "selectivity": null,
+          "jobQueries": 11
+        },
+        {
+          "field": "production_year",
+          "op": ">",
+          "value": 1990,
+          "selectivity": null,
+          "jobQueries": 7
+        },
+        {
+          "field": "production_year",
+          "op": "between",
+          "value": [
+            2000,
+            2010
+          ],
+          "selectivity": null,
+          "jobQueries": 5
+        },
+        {
+          "field": "production_year",
+          "op": "between",
+          "value": [
+            1950,
+            2000
+          ],
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "production_year",
+          "op": "between",
+          "value": [
+            2005,
+            2010
+          ],
+          "selectivity": null,
+          "jobQueries": 2
+        },
+        {
+          "field": "episode_nr",
+          "op": "<",
+          "value": 100,
+          "selectivity": null,
+          "jobQueries": 3
+        },
+        {
+          "field": "title",
+          "op": "like",
+          "value": "Saw%",
+          "selectivity": null,
+          "jobQueries": 2
+        }
+      ]
+    }
+  }
+}

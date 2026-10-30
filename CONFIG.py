@@ -21,7 +21,7 @@ class CONFIG:
     N_JOBS = 1
     N_VERSIONS = 1
     JOB_SEED = 42  # -1 | 0
-    DATA_MANAGER = "TPCH"  # "TPCH" | "IMDB"
+    DATA_MANAGER = "TPCH"  # "TPCH" | "IMDB" | "JOB" (JOB requires TARGET_PLATFORM = "Wayang")
     TARGET_PLATFORM = "Wayang"  # "Flink" | "Wayang"
     #################################################################
 
@@ -29,10 +29,21 @@ class CONFIG:
     ABSTRACT_PLAN_GENERATOR = join(PROJECT_PATH, "generator_labeler")
     JOB_GENERATOR = join(PROJECT_PATH, "instantiator")
 
+    # Input workload the abstract plans are learned from, per DATA_MANAGER:
+    # (folder, plan-file name filter, max plan depth, max joins); -1 = learned from the workload
+    INPUT_WORKLOAD = {
+        "TPCH": ("data/input_workload_exec_plan/", "TPC_H", 6, 3),
+        "IMDB": ("data/input_workload_exec_plan/", "TPC_H", 6, 3),
+        "JOB": ("data/input_workload_exec_plan_job/", "JOB_", -1, -1),
+    }
+
     # Path to original exec plans
     ORIG_EXEC_PLAN_FOLDER = join(
-        PROJECT_PATH, "data/input_workload_exec_plan/"
+        PROJECT_PATH, INPUT_WORKLOAD[DATA_MANAGER][0]
     )  # <absolute_path_to_input_workload>
+    ORIG_EXEC_PLAN_FILTER = INPUT_WORKLOAD[DATA_MANAGER][1]
+    ABSTRACT_PLAN_MAX_DEPTH = INPUT_WORKLOAD[DATA_MANAGER][2]
+    ABSTRACT_PLAN_MAX_JOINS = INPUT_WORKLOAD[DATA_MANAGER][3]
 
     # Path of generated data destination
     BASE_PATH = join(PROJECT_PATH, "data/")  # <absolute_path_to_input_data>

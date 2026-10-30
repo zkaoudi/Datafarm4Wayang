@@ -1,0 +1,477 @@
+{
+ "source": "Derived from JOB query 30c by generator_labeler/JOB_InputWorkload.py (operator graph only; not produced by Flink).",
+ "query": "30c",
+ "netRunTime": -1,
+ "executionPlan": {
+  "nodes": [
+   {
+    "id": 0,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "complete_cast AS cc",
+    "parallelism": "1"
+   },
+   {
+    "id": 1,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "comp_cast_type AS cct1",
+    "parallelism": "1"
+   },
+   {
+    "id": 2,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "cct1.kind = 'cast'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 1,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 3,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on cct1.id = cc.subject_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 0,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 2,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 4,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "comp_cast_type AS cct2",
+    "parallelism": "1"
+   },
+   {
+    "id": 5,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "cct2.kind ='complete+verified'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 4,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 6,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on cct2.id = cc.status_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 3,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 5,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 7,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "cast_info AS ci",
+    "parallelism": "1"
+   },
+   {
+    "id": 8,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "ci.note IN ('(writer)', '(head writer)', '(written by)', '(story)', '(story editor)')",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 7,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 9,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = cc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 6,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 8,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 10,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "movie_info AS mi",
+    "parallelism": "1"
+   },
+   {
+    "id": 11,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "mi.info IN ('Horror', 'Action', 'Sci-Fi', 'Thriller', 'Crime', 'War')",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 10,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 12,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = mi.movie_id AND mi.movie_id = cc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 9,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 11,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 13,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "info_type AS it1",
+    "parallelism": "1"
+   },
+   {
+    "id": 14,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "it1.info = 'genres'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 13,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 15,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on it1.id = mi.info_type_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 12,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 14,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 16,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "movie_info_idx AS mi_idx",
+    "parallelism": "1"
+   },
+   {
+    "id": 17,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = mi_idx.movie_id AND mi.movie_id = mi_idx.movie_id AND mi_idx.movie_id = cc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 15,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 16,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 18,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "info_type AS it2",
+    "parallelism": "1"
+   },
+   {
+    "id": 19,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "it2.info = 'votes'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 18,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 20,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on it2.id = mi_idx.info_type_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 17,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 19,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 21,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "movie_keyword AS mk",
+    "parallelism": "1"
+   },
+   {
+    "id": 22,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on ci.movie_id = mk.movie_id AND mi.movie_id = mk.movie_id AND mi_idx.movie_id = mk.movie_id AND mk.movie_id = cc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 20,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 21,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 23,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "keyword AS k",
+    "parallelism": "1"
+   },
+   {
+    "id": 24,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "k.keyword IN ('murder', 'violence', 'blood', 'gore', 'death', 'female-nudity', 'hospital')",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 23,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 25,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on k.id = mk.keyword_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 22,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 24,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 26,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "name AS n",
+    "parallelism": "1"
+   },
+   {
+    "id": 27,
+    "type": "pact",
+    "pact": "Filter",
+    "contents": "n.gender = 'm'",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 26,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "FlatMap"
+   },
+   {
+    "id": 28,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on n.id = ci.person_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 25,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 27,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 29,
+    "type": "source",
+    "pact": "Data Source",
+    "contents": "title AS t",
+    "parallelism": "1"
+   },
+   {
+    "id": 30,
+    "type": "pact",
+    "pact": "Join",
+    "contents": "join on t.id = mi.movie_id AND t.id = mi_idx.movie_id AND t.id = ci.movie_id AND t.id = mk.movie_id AND t.id = cc.movie_id",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 28,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     },
+     {
+      "id": 29,
+      "ship_strategy": "Hash Partition",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Hybrid Hash (build: second input)"
+   },
+   {
+    "id": 31,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "combine: MIN(mi.info) AS movie_budget, MIN(mi_idx.info) AS movie_votes, MIN(n.name) AS writer, MIN(t.title) AS complete_violent_movie",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 30,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 32,
+    "type": "pact",
+    "pact": "Reduce",
+    "contents": "reduce: MIN(mi.info) AS movie_budget, MIN(mi_idx.info) AS movie_votes, MIN(n.name) AS writer, MIN(t.title) AS complete_violent_movie",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 31,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ],
+    "driver_strategy": "Reduce"
+   },
+   {
+    "id": 33,
+    "type": "sink",
+    "pact": "Data Sink",
+    "contents": "org.apache.flink.api.java.io.DiscardingOutputFormat",
+    "parallelism": "1",
+    "predecessors": [
+     {
+      "id": 32,
+      "ship_strategy": "Forward",
+      "exchange_mode": "PIPELINED"
+     }
+    ]
+   }
+  ]
+ }
+}
